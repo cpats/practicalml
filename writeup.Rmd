@@ -150,4 +150,13 @@ prediction<-predict(RForest, TestNAClean)
 
 
 ```
-Using the **predict** function, the random forest model, RForest, was able to correctly predicted the 20 different test cases.
+We earlier used k-fold cross validation to get an estimate of the out of sample error with k=5.
+
+### Out of sample error
+```{r Sample Error}
+RForest$finalModel
+```
+
+We proceed with the random forest knowing we have **low out of sample error (i.e. 0.64%)**. Using the **predict** function, the random forest model, RForest, was able to correctly predicted the 20 different test cases.
+
+
