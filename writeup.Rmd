@@ -1,0 +1,153 @@
+---
+title: "Practical Machine Learning: Prediction Assignment"
+author: "Chito Patiño"
+date: "December 13, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Prediction Exercise
+
+This project is intended to predict the manner in which people did their exercise
+using data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants.
+
+Below are information on the background and data source as noted in the course website.
+
+### Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+### Data
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har.
+
+## Methodology
+
+### Load packages
+
+We make use of the **caret**, **rattle**, and **rpart** packages for this project.
+
+```{r LoadPackages, message=FALSE}
+library(caret)
+library(rattle)
+library(rpart)
+```
+
+### Loading the train data
+
+We load the train dataset into the variable 'TrainData' and test data set into the variable 'TestData' from the online repository.
+
+```{r Load data}
+TrainData <- read.csv(url("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"), 
+    header=T, sep=",", na.strings=c(""," ",NA))
+dim(TrainData)
+TestData <- read.csv(url("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"), 
+    header=T, sep=",", na.strings=c(""," ",NA))
+dim(TestData)
+```
+
+### Preprocessing
+We want to remove columns which have several NAs. We set the threshold at 90% of NA or blank values. We are able to clean and reduce the number of columns to 53. The code is given below.
+
+```{r Clean NAs}
+NAcols <- which(colSums(is.na(TrainData) |TrainData=="")>0.9*dim(TrainData)[1]) 
+TrainNAClean <- TrainData[,-NAcols]
+TrainNAClean <- TrainNAClean[,-c(1:7)]
+dim(TrainNAClean)
+```
+
+### Partitioning
+We partition the cleaned training data into **training** and **testing** at a ratio of 70:30 so we can test for accuracy of our model without dealing with the actual **test** dataset.
+
+```{r Partition Train Data}
+set.seed(12345)
+TrainPartition<-createDataPartition(TrainNAClean$classe, p=0.7, list=FALSE)
+training<-TrainNAClean[TrainPartition, ]
+testing<-TrainNAClean[-TrainPartition, ]
+dim(training)
+dim(testing)
+```
+
+### Training
+
+For this project, we explore three machine learning models i.e. **classification trees**, **random forests**, and **generalized boosted model (gbm)** to find the algorithm with the highest accuracy of prediction.
+
+### Classification Tree
+
+We train the classification tree model using our partitioned training data and then check for its accuracy when applied to our partitioned test data.
+
+```{r Classification Tree}
+CTree <- train(classe~., data=training, method="rpart", 
+        trControl=trainControl(method="cv", number=5))
+fancyRpartPlot(CTree$finalModel)
+
+#predict using testing data
+predTree <- predict(CTree, newdata=testing)
+CMatrix <- confusionMatrix(predTree, testing$classe)
+CMatrix
+```
+
+The accuracy of the model is found to be **49.63%**.
+
+### Random Forest
+
+We train now using random forest and then check for its accuracy when applied to our partitioned test data.
+
+```{r Random Forest}
+RForest <- train(classe~., data=training, method="rf", 
+        trControl=trainControl(method="cv", number=5))
+RForest
+
+#predict using testing data
+predRF<-predict(RForest, testing)
+CMatrixRF <- confusionMatrix(predRF, testing$classe)
+CMatrixRF
+```
+
+The accuracy of the model which used random forest is found to be **98.86%**.
+
+### Gradient Boosting Method
+
+Lastly, we train using gradient boosting method and then check for its accuracy when applied to our partitioned test data.
+
+```{r GBM}
+GBMethod <- train(classe~., data=training, method="gbm", trControl=trainControl(method="cv", number=5), verbose=FALSE)
+GBMethod
+
+#predict using testing data
+predGBM<-predict(GBMethod, testing)
+CMatrixGBM <- confusionMatrix(predGBM, testing$classe)
+CMatrixGBM
+```
+
+The accuracy of the model using gbm is found to be **95.94%**.
+
+### Conclusion
+Based on the accuracy of the three models, **random forest** yielded the highest accuracy.
+
+We then do validation of the accuracy of the random forest model using our test data.
+
+```{r Test Validation}
+#Clean test data
+NACols <- which(colSums(is.na(TestData) |TestData=="")>0.9*dim(TestData)[1]) 
+TestNAClean <- TestData[,-NACols]
+TestNAClean <- TestNAClean[,-1]
+#dim(TestDataClean)
+
+#predict using testing data
+prediction<-predict(RForest, TestNAClean)
+
+
+```
+Using the **predict** function, the random forest model, RForest, was able to correctly predicted the 20 different test cases.
