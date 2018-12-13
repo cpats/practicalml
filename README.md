@@ -22,6 +22,6 @@ The data for this project come from this source: http://groupware.les.inf.puc-ri
 
 ## Project Files
 This repository has the following project files:
-1. [writeup] (https://cpats.github.io/practicalml/writeup.html)- the compiled HTML file showing the analysis and codes used for data loading until the prediction process.
+1. [writeup.html](https://cpats.github.io/practicalml/writeup.html)- the compiled HTML file showing the analysis and codes used for data loading until the prediction process.
 2. writeup.Rmd - the R markdown file which formats the analysis and codes used for data loading until the prediction process.
 3. README.md - this is the file you are currently reading. This gives an overview of the project and codes used to manipulate the data set to come up with the required outputs.
